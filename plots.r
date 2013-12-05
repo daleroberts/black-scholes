@@ -63,7 +63,7 @@ doit <- function(f, filename, name) {
              phi=40,
              axes=FALSE) -> res
   the.lines(t,s,v,res)
-  title(name, line=0)
+  #title(name, line=0)
   dev.off()
   system(paste("convert -trim", fn, fn))
 }
