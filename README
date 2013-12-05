@@ -1,4 +1,0 @@
-Implementation of the Black Scholes formula and some greeks. These
-functions were implemented for the purpose of plotting nice graphics.
-
-Dale Roberts <dale.o.roberts@gmail.com>

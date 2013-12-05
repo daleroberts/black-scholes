@@ -1,86 +1,90 @@
 # Black-Scholes model: value function and some greeks
 # Dale Roberts (c) 2010
 
-#	S = Asset price
+# S = Asset price
 # K = Strike price
-# T = Time to maturity
 # r = Risk-free rate
+# tau = Time to maturity
 # sigma = Volatility of asset price
 
-EPS <- 0.01
+EPS <- 1./365. 
 
-bs.value <- function(type = c("pe","ce"), S, K, T, r, sigma) {
-  d1 <- (log(S/K) + (r + 0.5*sigma^2)*T)/(sigma*sqrt(T))
-  d2 <- d1 - sigma*sqrt(T)
-  if (type == "ce") { # European call
-    if (T < EPS) { # Small time to expiry
-      return(max(S-K,0))
+bscall.value <- function(S, K, tau, r, sigma) {
+  d1 <- (log(S/K) + (r + 0.5*sigma^2)*tau)/(sigma*sqrt(tau))
+  d2 <- d1 - sigma*sqrt(tau)
+  if (tau < EPS) { # Small time to expiry
+    return(max(S-K,0))
+  } else {
+    return(S*pnorm(d1) - K*exp(-r*(tau))*pnorm(d2))
+  }
+}
+
+bsput.value <- function(S, K, tau, r, sigma) {
+  d1 <- (log(S/K) + (r + 0.5*sigma^2)*tau)/(sigma*sqrt(tau))
+  d2 <- d1 - sigma*sqrt(tau)
+   if (tau < EPS) { # Small time to expiry
+    return(max(K-S,0))
+  } else {
+    return(K*exp(-r*(tau))*pnorm(-d2) - S*pnorm(-d1))
+  }
+}
+
+bscall.delta <- function(S, K, tau, r, sigma) {
+  d1 <- (log(S/K) + (r + 0.5*sigma^2)*tau)/(sigma*sqrt(tau))
+  if (tau < EPS) { # by hand for small time to expiry
+    if (K-S < 0) {
+      return(1.0)
     } else {
-      return(S*pnorm(d1) - K*exp(-r*(T))*pnorm(d2))
+      return(0.0)
     }
   } else {
-    if (T < EPS) { # Small time to expiry
-      return(max(K-S,0))
+    return(pnorm(d1))
+  }
+}
+
+bsput.delta <- function(S, K, tau, r, sigma) {
+  d1 <- (log(S/K) + (r + 0.5*sigma^2)*tau)/(sigma*sqrt(tau))
+  if (tau < EPS) { # by hand for small time to expiry
+    if (K-S > 0) {
+      return(-1.0)
     } else {
-      return(K*exp(-r*(T))*pnorm(-d2) - S*pnorm(-d1))
+      return(0.0)
     }
+  } else {
+    return(pnorm(d1)-1)
   }
 }
 
-bs.delta <- function(type = c("pe","ce"), S, K, T, r, sigma) {
-  d1 <- (log(S/K) + (r + 0.5*sigma^2)*T)/(sigma*sqrt(T))
-  if (type == "ce") {
-    # by hand for small T
-    if (T < EPS) 
-    {
-      if (K-S < 0) {
-        return(1.0)
-      } else {
-        return(0.0)
-      }
-    } 
-    # formula
-    else {
-      return(pnorm(d1))
-    }
-  } else { # Put
-    if (T < EPS) {
-      if (K-S > 0) {
-        return(-1.0)
-      } else {
-        return(0.0)
-      }
-    } 
-    else {
-      return(pnorm(d1)-1)
-    }
-  }
+bscall.gamma <- function(S, K, tau, r, sigma) {
+  d1 <- (log(S/K) + (r + 0.5*sigma^2)*tau)/(sigma*sqrt(tau))
+  return(dnorm(d1)/(S*sigma*sqrt(tau)))
 }
 
-bs.gamma <- function(type = c("pe","ce"), S, K, T, r, sigma) {
-  d1 <- (log(S/K) + (r + 0.5*sigma^2)*T)/(sigma*sqrt(T))
-  return(dnorm(d1)/(S*sigma*sqrt(T)))
+bscall.theta <- function(S, K, tau, r, sigma) {
+  d1 <- (log(S/K) + (r + 0.5*sigma^2)*tau)/(sigma*sqrt(tau))
+  d2 <- d1 - sigma*sqrt(tau)
+  return(-S*dnorm(d1)*sigma/(2*sqrt(tau)) - r*K*exp(-r*tau)*pnorm(d2))
 }
 
-bs.theta <- function(type = c("pe","ce"), S, K, T, r, sigma) {
-  d1 <- (log(S/K) + (r + 0.5*sigma^2)*T)/(sigma*sqrt(T))
-  d2 <- d1 - sigma*sqrt(T)
-  if (type == "ce")
-    return(-S*dnorm(d1)*sigma/(2*sqrt(T)) - r*K*exp(-r*T)*pnorm(d2))
-  else
-    return(-S*dnorm(d1)*sigma/(2*sqrt(T)) + r*K*exp(-r*T)*pnorm(-d2))
+bsput.theta <- function(S, K, tau, r, sigma) {
+  d1 <- (log(S/K) + (r + 0.5*sigma^2)*tau)/(sigma*sqrt(tau))
+  d2 <- d1 - sigma*sqrt(tau)
+  return(-S*dnorm(d1)*sigma/(2*sqrt(tau)) + r*K*exp(-r*tau)*pnorm(-d2))
 }
 
-bs.vega <- function(type = c("pe","ce"), S, K, T, r, sigma) {
-  d1 <- (log(S/K) + (r + 0.5*sigma^2)*T)/(sigma*sqrt(T))
-  return(S*sqrt(T)*dnorm(d1))
+bscall.vega <- function(S, K, tau, r, sigma) {
+  d1 <- (log(S/K) + (r + 0.5*sigma^2)*tau)/(sigma*sqrt(tau))
+  return(S*sqrt(tau)*dnorm(d1))
 }
 
-bs.rho <- function(type = c("pe","ce"), S, K, T, r, sigma) {
-  d1 <- (log(S/K) + (r + 0.5*sigma^2)*T)/(sigma*sqrt(T))
-  d2 <- d1 - sigma*sqrt(T)
-  if (type == "ce")
-    return(K*T*exp(-r*T)*pnorm(d2))
-  else
-    return(-K*T*exp(-r*T)*pnorm(-d2))
+bscall.rho <- function(S, K, tau, r, sigma) {
+  d1 <- (log(S/K) + (r + 0.5*sigma^2)*tau)/(sigma*sqrt(tau))
+  d2 <- d1 - sigma*sqrt(tau)
+  return(K*tau*exp(-r*tau)*pnorm(d2))
+}
+
+bsput.rho <- function(S, K, tau, r, sigma) {
+  d1 <- (log(S/K) + (r + 0.5*sigma^2)*tau)/(sigma*sqrt(tau))
+  d2 <- d1 - sigma*sqrt(tau)
+  return(-K*tau*exp(-r*tau)*pnorm(-d2))
 }
