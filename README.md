@@ -1,6 +1,6 @@
-## Black-Scholes formula and greeks
+### Black-Scholes formula and greeks
 
-Implementation in *R* of the Black Scholes formula and some greeks.
+Implementation in R of the Black Scholes formula and some greeks.
 
 ![value](https://rawgithub.com/daleroberts/black-scholes/master/images/bscall-value.png)
 ![delta](https://rawgithub.com/daleroberts/black-scholes/master/images/bscall-delta.png)
